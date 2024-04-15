@@ -1,6 +1,6 @@
 use std::{
     io::{prelude::*, BufReader},
-    net::{TcpListener, TcpStream},
+    net::{TcpListener, TcpStream}, path::PathBuf,
 };
 
 fn main() {
@@ -29,33 +29,50 @@ fn handle_connection(base_path: &std::path::PathBuf, mut stream: TcpStream) {
     let method = request_parts.get(0).unwrap();
     println!("Requested {:#?}", request_line);
 
-    let mut file_path: String = "".to_string();
+    let mut file_path: PathBuf = std::path::PathBuf::new();
     let status: Status;
     let content: String;
     if *method == "GET" {
         let req_path = request_parts.get(1).unwrap();
-        let file_path = get_sanitised_file_path(req_path);
-        let full_path = base_path.join(&file_path);
-
-        ( status, content ) = get_file_content_or_err(full_path);
+        file_path = get_full_path(base_path, req_path);
+        ( status, content ) = get_file_content_or_err(&file_path);
     } else {
         status = Status::ServerError;
         content = "Method unsupported".to_string();
     }
 
-    println!("Responding with {} - {:?}", file_path, status);
+    println!("Responding with {:?} - {:?}", file_path, status);
     let response = format_response(status, content).to_owned();
     stream.write(response.as_bytes()).unwrap();
 }
 
-fn get_sanitised_file_path(path: &str) -> String {
+fn get_full_path(base_path: &std::path::PathBuf, path: &str) -> std::path::PathBuf {
     let mut path = match path {
-        "/" => "/index.xml".to_string(),
+        "/" => get_index_file(base_path),
         _ => path.to_string()
     };
     path = path.strip_prefix('/').unwrap().to_string();
     path = path.replace("../", "");
-    path
+    base_path.join(path)
+}
+
+fn get_index_file(base_path: &std::path::PathBuf) -> String {
+    let default_index_files = &[
+        "index.html",
+        "index.htm",
+        "index.xhtml",
+        "index.xml",
+        "index.md",
+        "index.txt",
+    ];
+    let file = default_index_files.iter().find(|path| {
+        let full_path = std::path::Path::new(&base_path).join(&path);
+        file_exists(&std::path::Path::new(&full_path).to_path_buf())
+    });
+    match file {
+        Some(file) => format!("/{}", file),
+        None => "/index.html".to_string()
+    }
 }
 
 fn file_exists(file: &std::path::PathBuf) -> bool {
@@ -63,7 +80,7 @@ fn file_exists(file: &std::path::PathBuf) -> bool {
     path.exists()
 }
 
-fn get_file_content_or_err(file: std::path::PathBuf) -> (Status, String) {
+fn get_file_content_or_err(file: &std::path::PathBuf) -> (Status, String) {
     match file_exists(&file) {
         true => {
             let content = std::fs::read_to_string(file);
