@@ -9,7 +9,7 @@ fn main() {
 
     let base_path_str = match args.find(|el| el == "--root") {
         Some(_) => args.next().expect("Expected base path to be supplied following --root argument"),
-        None => "".to_string()
+        None => "public".to_string()
     };
     let base_path = std::path::Path::new(&base_path_str).to_path_buf();
     

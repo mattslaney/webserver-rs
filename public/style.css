@@ -1,0 +1,39 @@
+html,
+body {
+    width: 100%;
+    height: 100%
+}
+
+.container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.centerpane {
+    max-width: fit-content;
+    border: solid 1px black;
+    padding: 50px;
+    border-radius: 10px;
+    animation: heartbeat 2s infinite; 
+}
+
+@keyframes heartbeat {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(255, 108, 0, 0.2);
+    }
+    5%, 85% {
+        box-shadow: 0 0 20px rgba(255, 108, 0, 0.5);
+    }
+    10%, 40% {
+        box-shadow: 0 0 30px rgba(255, 108, 0, 0.8);
+    }
+    15% {
+        box-shadow: 0 0 20px rgba(255, 108, 0, 0.5);
+    }
+    20% {
+        box-shadow: 0 0 10px rgba(255, 108, 0, 0.2);
+    }
+}
